@@ -6,7 +6,7 @@ async function run() {
   try {
     // 1. Authentification pour récupérer le token
     console.log("🔑 Authentification en cours...");
-    const response = await axios.post("http://localhost:3000/auth/login", {
+    const response = await axios.post("http://localhost:3001/auth/login", {
       username: "john", // Remplace par tes identifiants
       password: "changeme"
     });
@@ -15,7 +15,7 @@ async function run() {
     console.log("✅ Token reçu !");
 
     // 2. Connexion WebSocket avec le token récupéré
-    const socket = io("http://localhost:3000/chat", {
+    const socket = io("http://localhost:3001/chat", {
       extraHeaders: {
         authorization: `Bearer ${token}`
       }
