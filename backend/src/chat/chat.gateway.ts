@@ -30,10 +30,8 @@ export class ChatGateway {
   }
   @SubscribeMessage('NewMessage')
   handleMessage(@MessageBody() message: ChatMessage,@ConnectedSocket() client: Socket ) {
-    console.log('User msg: ',message.text)
     this.AiService.getAiStream(message.text,(chunk: string)=>{
       client.emit('ai_response',chunk)
-      console.log(chunk)
     })
   }
   

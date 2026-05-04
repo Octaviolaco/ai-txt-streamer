@@ -6,7 +6,6 @@ import { Loader2 } from "lucide-react";
 
 
 export function LoginForm() {
-console.log("LoginForm rendu");
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +25,6 @@ console.log("LoginForm rendu");
       setLoading(false);
     }
   };
-  console.log("LoginForm - loading:", loading, "error:", error);
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
       <div className="w-full max-w-md p-8 space-y-6 bg-card border border-border rounded-xl shadow-sm">

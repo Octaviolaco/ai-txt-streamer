@@ -11,6 +11,7 @@ export class WsJwtGuard implements CanActivate {
     const token = client.handshake.headers.authorization?.split(' ')[1];
     
     if (!token) {
+      console.log('No Token')
       throw new UnauthorizedException("No token");
     }
 
@@ -18,6 +19,7 @@ export class WsJwtGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token);
       client.data.user = payload; 
     } catch {
+      console.log('Unauthorized Token')
       throw new UnauthorizedException("Token not verified by JwtService");
     }
 

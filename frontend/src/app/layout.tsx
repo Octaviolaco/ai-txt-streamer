@@ -1,6 +1,5 @@
 import "./globals.css";
 import { Public_Sans } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 
 const publicSans = Public_Sans({ subsets: ["latin"] });
@@ -29,8 +28,6 @@ export default function RootLayout({
         <main className="flex-1 relative overflow-hidden bg-background">
           {children}
         </main>
-
-        <Toaster />
         </AuthProvider>
       </body>
     </html>
