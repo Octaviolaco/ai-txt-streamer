@@ -28,6 +28,7 @@ export class AuthService {
     async signIn(username: string, pass: string){
 
         const user = await this.userservice.findOne(username)
+        console.log(user)
         if (!user){
             console.log('Username not recognized',username)
             throw new UnauthorizedException('Username not recognized')
@@ -36,7 +37,7 @@ export class AuthService {
 
         if (!isMatch){
             console.log('WrongPassword')
-            throw new UnauthorizedException()
+            throw new UnauthorizedException('Wrong Password')
         }
         const payload = {sub: user.id, username: user.username}
         const tokens = await this.getTokens(user.id, user.username)
@@ -48,7 +49,8 @@ export class AuthService {
     }
 
     async signUp(username: string, password: string){
-        await this.userservice.create({username: username, password: password})
+        const hashedPassword = await bcrypt.hash(password,10)
+        await this.userservice.create({username: username, password: hashedPassword})
     }
 
     async logout(accessToken: string, refreshToken: string){}   

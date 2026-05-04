@@ -1,5 +1,5 @@
 const axios = require('axios');
-
+const { setTimeout } = require("timers/promises");
 const API_URL = "http://localhost:3001/auth";
 const testUser = {
   username: `tester_${Math.floor(Math.random() * 1000)}`,
@@ -8,6 +8,9 @@ const testUser = {
 
 let accessToken = "";
 let refreshToken = "";
+
+
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 async function runTests() {
   console.log("🚀 DÉMARRAGE DES TESTS API AUTH\n");
@@ -19,6 +22,9 @@ async function runTests() {
     console.log("✅ Inscription réussie !\n");
 
     // --- 2. LOGIN ---
+    console.log("Waiting 5 sec");
+    await setTimeout(10000); 
+    setTimeout()
     console.log("2️⃣ Connexion pour récupérer les tokens...");
     const loginRes = await axios.post(`${API_URL}/login`, testUser);
     accessToken = loginRes.data.access_token;
