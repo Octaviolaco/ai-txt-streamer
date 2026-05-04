@@ -28,7 +28,6 @@ export class AuthService {
     async signIn(username: string, pass: string){
 
         const user = await this.userservice.findOne(username)
-        console.log(user)
         if (!user){
             console.log('Username not recognized',username)
             throw new UnauthorizedException('Username not recognized')
@@ -53,7 +52,7 @@ export class AuthService {
         await this.userservice.create({username: username, password: hashedPassword})
     }
 
-    async logout(accessToken: string, refreshToken: string){}   
+    async logout(accessToken: string, refreshToken: string){} //TODO invalider le refreshtoken donné  
     
     async refreshaccessToken(username: string, refreshToken: string){
         const user = await this.userservice.findOne(username)
