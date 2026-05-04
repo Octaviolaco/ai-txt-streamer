@@ -2,8 +2,6 @@ import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/c
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { access } from 'fs';
-import { paginationResponseFromJSON } from '@mistralai/mistralai/models/components';
 
 @Injectable()
 export class AuthService {
@@ -55,6 +53,10 @@ export class AuthService {
     async logout(accessToken: string, refreshToken: string){} //TODO invalider le refreshtoken donné  
     
     async refreshaccessToken(username: string, refreshToken: string){
+        if (!username || !refreshToken){
+            throw new ForbiddenException("Username or Refresh Token set to None")
+        }
+
         const user = await this.userservice.findOne(username)
         
         if (!user){

@@ -19,7 +19,7 @@ export class WsJwtGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token);
       client.data.user = payload; 
     } catch {
-      console.log('Unauthorized Token')
+      console.log('Unauthorized Token',token)
       throw new UnauthorizedException("Token not verified by JwtService");
     }
 

@@ -26,7 +26,7 @@ export class ChatGateway {
   constructor(private readonly AiService: AiService){}
 
   handleConnection(client: Socket) {
-  console.log('Tentative de connexion détectée ! ID:', client.id);
+  console.log('Tentative de connexion détectée ! socket ID:', client.id);
   }
   @SubscribeMessage('NewMessage')
   handleMessage(@MessageBody() message: ChatMessage,@ConnectedSocket() client: Socket ) {

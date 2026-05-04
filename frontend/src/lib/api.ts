@@ -22,6 +22,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const username = localStorage.getItem('username')
+    const refresh_token = localStorage.getItem("refresh_token")
+    if (!username || !refresh_token) {
+    window.location.href = "/";
+    return Promise.reject(error);
+    }
+    
     const originalRequest = error.config;
     
     //essayer de rafraichir d'abord non? si ca fait des délais faudra tej ca
@@ -31,13 +38,15 @@ api.interceptors.response.use(
       try {
         //demander un nouveau JWT avec le refresh token si on en trouve dans le backend
         const refreshToken = localStorage.getItem("refresh_token");
-        const response = await axios.post(`${BACKEND_URL}/auth/refresh`, {
+        const username = localStorage.getItem('username');
+
+        const response = await axios.post(`${BACKEND_URL}/auth/refresh/acess_token`, {
+          username: username,
           refresh_token: refreshToken,
         });
         
-        const newAccessToken = response.data.access_token;
+        const newAccessToken = response.data.access_token; //pas totalement sur qu'il renvoie sous ce format
         localStorage.setItem("access_token", newAccessToken);
-        localStorage.setItem("refresh_token", response.data.refresh_token)
 
          //retry avec le nouveau
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -46,7 +55,10 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("username");
+
         window.location.href = "/"; // Redirige vers l'accueil
+        console.log("Erreur dans la rotation du acess_token: ",refreshError)
         return Promise.reject(refreshError);
       }
     }

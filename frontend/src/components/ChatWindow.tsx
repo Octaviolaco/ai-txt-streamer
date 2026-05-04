@@ -21,23 +21,23 @@ export function ChatWindow(props: {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { token } = useAuth();
+  const { token, logout } = useAuth(); // On importe logout au cas où la reconnexion échoue
   const [socket, setSocket] = useState<any>(null);
 
-  // Auto-scroll vers le bas
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Connection et deconection au socket 
   useEffect(() => {
-        if (!token) return;
+    if (!token) return;
 
-    const socket = getSocket(token);
-    setSocket(socket);
-    socket.connect();
+    // On s'assure d'avoir le token le plus récent depuis le localStorage
+    const currentToken = localStorage.getItem("access_token") || token;
+    const newSocket = getSocket(currentToken);
+    setSocket(newSocket);
+    newSocket.connect();
 
-    socket.on("ai_response", (chunk: string) => {
+    newSocket.on("ai_response", (chunk: string) => {
       setIsLoading(false);
       setMessages((prev) => {
         const lastMsg = prev[prev.length - 1];
@@ -56,15 +56,27 @@ export function ChatWindow(props: {
       });
     });
 
+    // Gestion de l'expiration du token en plein chat !
+    newSocket.on("connect_error", (err: any) => {
+      console.error("Erreur WebSocket:", err.message);
+      // Si le backend rejette à cause du token, on recharge la page pour forcer Axios 
+      // à faire son travail d'interception et récupérer un nouveau token.
+      if (err.message === "Unauthorized" || err.message.includes("jwt")) {
+         console.log("Token WebSocket invalide, tentative de rafraîchissement via la page...");
+         window.location.reload(); 
+      }
+    });
+
     return () => {
-      socket.off("ai_response");
+      newSocket.off("ai_response");
+      newSocket.off("connect_error");
       disconnectSocket();
     };
   }, [token]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !socket) return;
 
     const userMsg: Message = {id: Date.now().toString(),role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
@@ -76,7 +88,6 @@ export function ChatWindow(props: {
 
   return (
     <div className="flex flex-col h-full bg-[#f4f4f5] dark:bg-gray-900">
-      {/* Zone des messages */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -92,7 +103,6 @@ export function ChatWindow(props: {
         )}
       </div>
 
-      {/* Barre de saisie (Le Footer) */}
       <footer className="p-4 bg-white dark:bg-gray-800 border-t">
         <form onSubmit={sendMessage} className="max-w-3xl mx-auto flex gap-2">
           <input

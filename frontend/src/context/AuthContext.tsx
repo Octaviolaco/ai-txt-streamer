@@ -74,17 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     //logout: supprimer les tokens du localStorage ET du backend
     setIsLoading(true);
-    const response = await api.post("/auth/logout", {"access_token": token, "refresh_token": localStorage.getItem("refresh_token")});
+    try {
+      await api.post("/auth/logout", {
+        "access_token": token, 
+        "refresh_token": localStorage.getItem("refresh_token")
+      });
+    } catch (error) {console.error("Error in logging out, forced cleaning of local storage anyways")}
+
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem('username')
 
     setToken(null);
     setIsLoading(false);
-    console.log(response.data.message);
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ token, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -20,7 +20,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Post('logout')
     logout(@Body() credentials: Record<string, any>){
-        this.authService.logout(credentials.acess_token,credentials.refresh_token);
+        this.authService.logout(credentials.access_token,credentials.refresh_token);
     }
 
     @HttpCode(HttpStatus.OK)
