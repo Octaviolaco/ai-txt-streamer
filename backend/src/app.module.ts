@@ -2,18 +2,17 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { ChatGateway } from './chat/chat.gateway';
+import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatModule } from './chat/chat.module';
-import { UserModule } from './user/user.module';
+import { User } from './user/entities/user.entity';
 
 @Module({
-  imports: [AuthModule, UsersModule, ChatModule, UserModule,
+  imports: [AuthModule, UserModule, ChatModule,
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'db.sqlite',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
       synchronize: true, 
     }),
   ],

@@ -11,20 +11,23 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const user = await this.UserRepo.create(createUserDto);
-    return await this.UserRepo.save(user)
+    return await this.UserRepo.save(createUserDto)
   }
 
   findAll() {
     return `This action returns all user`;
   }
 
-  findOne(username: string) {
-    const user: User = void;
-    return user;
+  async findOne(username: string) {
+    return await this.UserRepo.findOne({
+      where: {
+        username
+      }
+    })
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async updateRefreshToken(id: number, refreshToken: string) {
+    const user = await this.UserRepo.update({id},{refreshToken})
   }
 
   remove(id: number) {

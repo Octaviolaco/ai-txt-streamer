@@ -1,4 +1,4 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -19,7 +19,7 @@ export class AuthController {
 
     @HttpCode(HttpStatus.OK)
     @Post('logout')
-    logout(credentials: Record<string, any>){
+    logout(@Body() credentials: Record<string, any>){
         this.authService.logout(credentials.acess_token,credentials.refresh_token);
     }
 

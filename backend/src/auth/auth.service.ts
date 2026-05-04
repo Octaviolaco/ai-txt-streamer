@@ -3,6 +3,7 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { access } from 'fs';
+import { paginationResponseFromJSON } from '@mistralai/mistralai/models/components';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +28,10 @@ export class AuthService {
     async signIn(username: string, pass: string){
 
         const user = await this.userservice.findOne(username)
-
+        if (!user){
+            console.log('Username not recognized',username)
+            throw new UnauthorizedException('Username not recognized')
+        }
         const isMatch = await bcrypt.compare(pass,user.password)
 
         if (!isMatch){
@@ -38,16 +42,24 @@ export class AuthService {
         const tokens = await this.getTokens(user.id, user.username)
         const hashedRefreshToken = await bcrypt.hash(tokens.refresh_token, 10)
 
-        await this.userservice.update(user.id,{refreshToken: hashedRefreshToken })
+        await this.userservice.updateRefreshToken(user.id,hashedRefreshToken)
 
         return tokens
+    }
+
+    async signUp(username: string, password: string){
+        await this.userservice.create({username: username, password: password})
     }
 
     async logout(accessToken: string, refreshToken: string){}   
     
     async refreshaccessToken(username: string, refreshToken: string){
         const user = await this.userservice.findOne(username)
-
+        
+        if (!user){
+            console.log('Unrecognized username',username)
+            throw new ForbiddenException('Unkown username')
+        }
         if (user.refreshToken){
             const isMatch = await bcrypt.compare(refreshToken,user.refreshToken )
 
@@ -72,7 +84,10 @@ export class AuthService {
 
     async refreshRefreshToken(username: string, refreshToken: string){
         const user = await this.userservice.findOne(username)
-
+        if (!user){
+            console.log('Unrecognized username',username)
+            throw new ForbiddenException('Unkown username')
+        }
         if (user.refreshToken){
             const isMatch = await bcrypt.compare(refreshToken,user.refreshToken )
 
