@@ -49,11 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     // login par la route du backend
     setIsLoading(true);
+    console.log('entering login with ',username,password)
     const response = await api.post("/auth/login", { username, password });
     
     const newAccessToken = response.data.access_token;
     const newRefreshToken = response.data.refresh_token; 
     
+    console.log("accessToken:",newAccessToken)
+    console.log("refreshToken:",newRefreshToken)
     localStorage.setItem("access_token", newAccessToken);
     localStorage.setItem("refresh_token", newRefreshToken);
     localStorage.setItem("username",username)

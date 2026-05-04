@@ -5,6 +5,7 @@ import { getSocket, disconnectSocket } from "@/lib/socket";
 import { useAuth } from "@/context/AuthContext";
 import { ChatMessageBubble } from "@/components/ChatMessageBubble";
 import { Send, Loader2 } from "lucide-react"; 
+import axios from "axios";
 
 interface Message {
   id: string;
@@ -21,66 +22,95 @@ export function ChatWindow(props: {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { token, logout } = useAuth(); // On importe logout au cas où la reconnexion échoue
+  const { token, logout } = useAuth();
   const [socket, setSocket] = useState<any>(null);
 
+  // Auto-scroll en bas à chaque nouveau message
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Gestion de la connexion WebSocket
   useEffect(() => {
     if (!token) return;
 
-    // On s'assure d'avoir le token le plus récent depuis le localStorage
-    const currentToken = localStorage.getItem("access_token") || token;
-    const newSocket = getSocket(currentToken);
-    setSocket(newSocket);
-    newSocket.connect();
+    // Fonction encapsulée pour pouvoir la rappeler avec un nouveau token
+    const connectAndListen = (currentToken: string, isRefresh = false) => {
+      // ⚠️ IMPORTANT: Si isRefresh est true, ça détruit l'ancien socket !
+      const s = getSocket(currentToken, isRefresh);
+      setSocket(s);
+      s.connect();
 
-    newSocket.on("ai_response", (chunk: string) => {
-      setIsLoading(false);
-      setMessages((prev) => {
-        const lastMsg = prev[prev.length - 1];
-        if (lastMsg && lastMsg.role === "assistant") {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = {
-            ...lastMsg,
-            content: lastMsg.content + chunk,
-          };
-          return newMessages;
-        }
-        return [
-          ...prev,
-          { id: Date.now().toString(), role: "assistant", content: chunk },
-        ];
+      // --- ÉCOUTE DES MESSAGES ---
+      s.on("ai_response", (chunk: string) => {
+        setIsLoading(false);
+        setMessages((prev) => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg && lastMsg.role === "assistant") {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = {
+              ...lastMsg,
+              content: lastMsg.content + chunk,
+            };
+            return newMessages;
+          }
+          return [...prev, { id: Date.now().toString(), role: "assistant", content: chunk }];
+        });
       });
-    });
 
-    // Gestion de l'expiration du token en plein chat !
-    newSocket.on("connect_error", (err: any) => {
-      console.error("Erreur WebSocket:", err.message);
-      // Si le backend rejette à cause du token, on recharge la page pour forcer Axios 
-      // à faire son travail d'interception et récupérer un nouveau token.
-      if (err.message === "Unauthorized" || err.message.includes("jwt")) {
-         console.log("Token WebSocket invalide, tentative de rafraîchissement via la page...");
-         window.location.reload(); 
-      }
-    });
+      // --- ÉCOUTE DES ERREURS (GUARD NESTJS) ---
+      s.on("exception", async (err: any) => {
+        setIsLoading(false); // On casse la boucle de chargement
+        console.error("Erreur WebSocket Guard:", err);
 
+        // Le Guard NestJS renvoie souvent "Internal server error" au lieu de 401 en WS
+        if (err.message === "Internal server error" || err.status === "error" || err.message === "Unauthorized") {
+          try {
+            console.log("🔄 Token expiré détecté par le WebSocket. Rafraîchissement...");
+            
+            const username = localStorage.getItem("username");
+            const refreshToken = localStorage.getItem("refresh_token");
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+            
+            // On appelle directement la route de refresh en POST
+            const res = await axios.post(`${backendUrl}/auth/refresh/acess_token`, {
+              username: username,
+              refresh_token: refreshToken
+            });
+            
+            const newToken = res.data.access_token || res.data; 
+            localStorage.setItem("access_token", newToken);
+            
+            console.log("✅ Nouveau token obtenu, reconnexion...");
+            // On relance la fonction avec le paramètre forceNew à true !
+            connectAndListen(newToken, true);
+
+          } catch (refreshErr) {
+            console.error("❌ Échec critique du rafraîchissement, déconnexion.");
+            logout();
+          }
+        }
+      });
+    };
+
+    // Lancement initial
+    const initialToken = localStorage.getItem("access_token") || token;
+    connectAndListen(initialToken);
+
+    // Nettoyage quand on quitte la page
     return () => {
-      newSocket.off("ai_response");
-      newSocket.off("connect_error");
       disconnectSocket();
     };
   }, [token]);
 
+  // Envoi d'un message
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !socket) return;
 
-    const userMsg: Message = {id: Date.now().toString(),role: "user", content: input };
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
+    setIsLoading(true); // Lance le spinner
 
     socket.emit("NewMessage", { text: input });
     setInput("");

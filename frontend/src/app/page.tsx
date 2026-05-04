@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const { token, isLoading, logout } = useAuth();
-  console.log("Token actuel dans Home:", token, "isLoading:", isLoading);
+  // console.log("Token actuel dans Home:", token, "isLoading:", isLoading);
   if (isLoading) {
     return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   }

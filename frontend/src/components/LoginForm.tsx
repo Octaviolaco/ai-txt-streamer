@@ -15,7 +15,6 @@ export function LoginForm() {
   const [successMsg, setSuccessMsg] = useState("")
 
   const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
-    console.log("Formulaire soumis avec", { username, password });
     e.preventDefault();
     setError("");
     setSuccessMsg("");
@@ -33,6 +32,7 @@ export function LoginForm() {
       setSuccessMsg("")
     } finally {
       setLoading(false);
+      console.log("Formulaire soumis avec", { username, password });
     }
   };
 

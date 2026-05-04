@@ -10,13 +10,14 @@ export class AuthService {
         private jwtService: JwtService
     ){}
 
-    async getTokens(userId: number, username: string){
+    async getTokens(userId: number, username: string, creationDate: Date){
         const payload = {sub: userId, username: username}
+        const payload2 = {sub: creationDate.toString(), username: username}
         const access_token = await this.jwtService.signAsync(payload,{
             secret:process.env.JWT_ACCESS_SECRET,
             expiresIn: '60s',
         })
-        const refresh_token = await this.jwtService.signAsync(payload,{
+        const refresh_token = await this.jwtService.signAsync(payload2,{
             secret:process.env.JWT_REFRESH_SECRET,
             expiresIn: '15m',
         })
@@ -37,7 +38,7 @@ export class AuthService {
             throw new UnauthorizedException('Wrong Password')
         }
         const payload = {sub: user.id, username: user.username}
-        const tokens = await this.getTokens(user.id, user.username)
+        const tokens = await this.getTokens(user.id, user.username, user.createdAt)
         const hashedRefreshToken = await bcrypt.hash(tokens.refresh_token, 10)
 
         await this.userservice.updateRefreshToken(user.id,hashedRefreshToken)
